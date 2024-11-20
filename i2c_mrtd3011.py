@@ -106,10 +106,10 @@ class mrtd3011:
         self.i2c_start()
 
         if not self.i2c_write_byte(0x20):
-            print('写入错误: a')
+            print('写入错误: 0x20')
             return
         if not self.i2c_write_byte(0x80):
-            print('写入错误: b')
+            print('写入错误: 0x80')
             return
 
         self.i2c_stop()
