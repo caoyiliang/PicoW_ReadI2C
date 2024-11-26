@@ -66,10 +66,12 @@ def start_server(mrtd):
         <h1>温度读取</h1>
         <p id="env-temp">环境温度: 加载中...</p>
         <p id="target-temp">目标温度: 加载中...</p>
+        <button id="export-btn">导出数据</button>
     </header>
     <div id="content">
         <canvas id="temp-canvas"></canvas>
     </div>
+    <script src="export_csv.js"></script>
     <script src="temperature_monitor.js"></script>
 </body>
 </html>
@@ -81,6 +83,10 @@ def start_server(mrtd):
             client.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n".encode() + temp_data.encode())
         elif path == '/temperature_monitor.js':
             with open('temperature_monitor.js', 'r') as js_file:
+                js_content = js_file.read()
+            client.send("HTTP/1.1 200 OK\r\nContent-Type: application/javascript\r\n\r\n".encode() + js_content.encode())
+        elif path == '/export_csv.js':
+            with open('export_csv.js', 'r') as js_file:
                 js_content = js_file.read()
             client.send("HTTP/1.1 200 OK\r\nContent-Type: application/javascript\r\n\r\n".encode() + js_content.encode())
         else:
