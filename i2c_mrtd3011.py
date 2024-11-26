@@ -5,12 +5,6 @@ class mrtd3011:
         self.i2c=I2C(0,sda=Pin(sda_pin),scl=Pin(scl_pin))
         self.env_temp = 0.0
         self.target_temp = 0.0
-    
-    def i2c_start(self):
-        self.i2c.start();
-
-    def i2c_stop(self):
-        self.i2c.stop();
 
     def read_temperature(self):
         u8_data = bytearray(7)
