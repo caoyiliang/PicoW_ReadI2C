@@ -1,6 +1,7 @@
 import network
 import socket
 from i2c_mrtd3011 import mrtd3011
+from i2c_smp3011 import smp3011
 import json
 
 def setup_wifi():
@@ -14,7 +15,7 @@ def setup_wifi():
         pass
     print('WiFi 热点已启动\n')
 
-def start_server(mrtd):
+def start_server(mrtd,smp):
     PORT = 80
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('192.168.4.1', PORT))
@@ -32,7 +33,7 @@ def start_server(mrtd):
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>温度监测</title>
+    <title>环境监测</title>
     <style>
         html, body {
             height: 100%;
@@ -63,26 +64,34 @@ def start_server(mrtd):
 </head>
 <body>
     <header>
-        <h1>温度读取</h1>
+        <h1>传感器读取</h1>
         <p id="env-temp">环境温度: 加载中...</p>
         <p id="target-temp">目标温度: 加载中...</p>
+        <p id="pressure">压力: 加载中...</p>
+        <p id="temperature">smp温度: 加载中...</p>
         <button id="export-btn">导出数据</button>
     </header>
     <div id="content">
         <canvas id="temp-canvas"></canvas>
     </div>
     <script src="export_csv.js"></script>
-    <script src="temperature_monitor.js"></script>
+    <script src="getSensorData.js"></script>
+    <script src="drawChart.js"></script>
 </body>
 </html>
     """
             client.send("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n".encode() + html_response.encode())
-        elif path == '/temperature':
+        elif path == '/sensor':
             env_temp, target_temp = mrtd.get_temperatures()
-            temp_data = json.dumps({'env_temp': env_temp, 'target_temp': target_temp})
+            pressure, temperature = smp.get_pressure_temperature()
+            temp_data = json.dumps({'env_temp': env_temp, 'target_temp': target_temp, 'pressure': pressure, 'temperature': temperature})
             client.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n".encode() + temp_data.encode())
-        elif path == '/temperature_monitor.js':
-            with open('temperature_monitor.js', 'r') as js_file:
+        elif path == '/getSensorData.js':
+            with open('getSensorData.js', 'r') as js_file:
+                js_content = js_file.read()
+            client.send("HTTP/1.1 200 OK\r\nContent-Type: application/javascript\r\n\r\n".encode() + js_content.encode())
+        elif path == '/drawChart.js':
+            with open('drawChart.js', 'r') as js_file:
                 js_content = js_file.read()
             client.send("HTTP/1.1 200 OK\r\nContent-Type: application/javascript\r\n\r\n".encode() + js_content.encode())
         elif path == '/export_csv.js':
@@ -100,9 +109,10 @@ def start_server(mrtd):
         handle_client(client)
 
 def main():
-    mrtd = mrtd3011(sda_pin=0, scl_pin=1)
+    mrtd = mrtd3011()
+    smp = smp3011()
     setup_wifi()
-    start_server(mrtd)
+    start_server(mrtd,smp)
 
 if __name__ == '__main__':
     main()

@@ -1,14 +1,16 @@
 function exportToCSV() {
     // 创建一个 CSV 内容字符串，并在文件开头添加 BOM 标记
     let csvContent = "\uFEFF"; 
-    csvContent += "时间,环境温度,目标温度\n"; // CSV 标题行
+    csvContent += "时间,环境温度,目标温度,压力,smp温度\n"; // CSV 标题行
 
     // 遍历每个数据点并格式化为 CSV 行
     for (let i = 0; i < timeStamps.length; i++) {
         let row = [
             timeStamps[i].toLocaleTimeString(), 
             envTemps[i].toFixed(2), 
-            targetTemps[i].toFixed(2)
+            targetTemps[i].toFixed(2),
+            pressures[i].toFixed(2),
+            temperatures[i].toFixed(2)
         ].join(","); // 用逗号分隔每个数据
         csvContent += row + "\n"; // 每行结束后换行
     }

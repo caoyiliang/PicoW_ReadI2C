@@ -1,8 +1,8 @@
 from machine import Pin,I2C
 
 class mrtd3011:
-    def __init__(self, sda_pin=0, scl_pin=1):
-        self.i2c=I2C(0,sda=Pin(sda_pin),scl=Pin(scl_pin))
+    def __init__(self, id=0, sda_pin=0, scl_pin=1):
+        self.i2c=I2C(id,sda=Pin(sda_pin),scl=Pin(scl_pin))
         self.env_temp = 0.0
         self.target_temp = 0.0
 
