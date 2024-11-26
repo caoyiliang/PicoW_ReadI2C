@@ -1,127 +1,25 @@
-from machine import Pin
-import time
+from machine import Pin,I2C
 
 class mrtd3011:
     def __init__(self, sda_pin=0, scl_pin=1):
-        self.sda = Pin(sda_pin, Pin.OUT, Pin.PULL_UP)
-        self.scl = Pin(scl_pin, Pin.OUT, Pin.PULL_UP)
+        self.i2c=I2C(0,sda=Pin(sda_pin),scl=Pin(scl_pin))
         self.env_temp = 0.0
         self.target_temp = 0.0
-
-    def sda_out(self):
-        self.sda.init(Pin.OUT)
-
-    def sda_in(self):
-        self.sda.init(Pin.IN)
-
-    def sda_high(self):
-        self.sda.value(1)
-
-    def sda_low(self):
-        self.sda.value(0)
-
-    def scl_high(self):
-        self.scl.value(1)
-
-    def scl_low(self):
-        self.scl.value(0)
-
+    
     def i2c_start(self):
-        self.sda_out()
-        self.sda_high()
-        self.scl_high()
-        time.sleep_us(5)
-        self.sda_low()
-        time.sleep_us(5)
-        self.scl_low()
-        time.sleep_us(5)
+        self.i2c.start();
 
     def i2c_stop(self):
-        self.sda_out()
-        self.scl_low()
-        self.sda_low()
-        time.sleep_us(5)
-        self.scl_high()
-        time.sleep_us(5)
-        self.sda_high()
-        time.sleep_us(5)
-
-    def i2c_write_byte(self, byte):
-        self.sda_out()
-        self.scl_low()
-        sda_out_value = (byte & 0x80) >> 7
-        time.sleep_us(5)
-        for _ in range(8):
-            if sda_out_value:
-                self.sda_high()
-            else:
-                self.sda_low()
-            time.sleep_us(5)
-            self.scl_high()
-            byte <<= 1
-            sda_out_value = (byte & 0x80) >> 7
-            time.sleep_us(5)
-            self.scl_low()
-            time.sleep_us(5)
-
-        retry_counter = 0
-        self.sda_in()
-        time.sleep_us(5)
-        self.scl_high()
-        time.sleep_us(5)
-        while self.sda.value():
-            retry_counter += 1
-            if retry_counter > 250:
-                self.i2c_stop()
-                return False
-        time.sleep_us(5)
-        self.scl_low()
-        return True
-
-    def i2c_read_byte(self, ack=True):
-        byte = 0
-        self.scl_low()
-        self.sda_in()
-        time.sleep_us(5)
-        for _ in range(8):
-            self.scl_high()
-            byte = (byte << 1) | self.sda.value()
-            time.sleep_us(5)
-            self.scl_low()
-            time.sleep_us(5)
-        self.sda_out()
-        time.sleep_us(5)
-        self.scl_low()
-        time.sleep_us(5)
-        if ack:
-            self.sda_low()
-        else:
-            self.sda_high()
-        self.scl_high()
-        time.sleep_us(5)
-        return byte
+        self.i2c.stop();
 
     def read_temperature(self):
-        u8_data = [0] * 7
-        self.i2c_start()
+        u8_data = bytearray(7)
+        try:
+            self.i2c.writeto(0x10, bytes([0x80]))            
+            self.i2c.readfrom_into(0x10,u8_data)
 
-        if not self.i2c_write_byte(0x20):
-            print('写入错误: 0x20')
-            return
-        if not self.i2c_write_byte(0x80):
-            print('写入错误: 0x80')
-            return
-
-        self.i2c_stop()
-        self.i2c_start()
-
-        self.i2c_write_byte(0x21)
-
-        for i in range(6):
-            u8_data[i] = self.i2c_read_byte(ack=True)
-        u8_data[6] = self.i2c_read_byte(ack=False)  # 不发送 ACK 以结束读取
-        
-        self.i2c_stop()
+        except OSError as e:
+            print(f"Communication error: {e}")
 
         if self.crc_generating(u8_data, 6) == u8_data[6]:
             self.env_temp = ((((u8_data[1] >> 1) & 0x7F | ((u8_data[2] & 0x01) << 7)) << 8) |
