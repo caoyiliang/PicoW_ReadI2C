@@ -17,10 +17,10 @@ function fetchTemperature() {
             var temperature = sensor.temperature;
             var currentTime = new Date();
 
-            document.getElementById('env-temp').innerHTML = '环境温度: ' + envTemp.toFixed(2) + ' C';
-            document.getElementById('target-temp').innerHTML = '目标温度: ' + targetTemp.toFixed(2) + ' C';
-            document.getElementById('pressure').innerHTML = '压力: ' + pressure.toFixed(2) + ' C';
-            document.getElementById('temperature').innerHTML = 'smp温度: ' + temperature.toFixed(2) + ' C';
+            document.getElementById('env-temp').innerHTML = '环境温度: ' + envTemp.toFixed(2) + ' °C';
+            document.getElementById('target-temp').innerHTML = '目标温度: ' + targetTemp.toFixed(2) + ' °C';
+            document.getElementById('pressure').innerHTML = '压力: ' + pressure.toFixed(2) + ' kPa';
+            document.getElementById('temperature').innerHTML = 'smp温度: ' + temperature.toFixed(2) + ' °C';
 
             envTemps.push(envTemp);
             targetTemps.push(targetTemp);
