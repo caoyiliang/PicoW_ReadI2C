@@ -2,6 +2,7 @@ var envTemps = [];
 var targetTemps = [];
 var pressures = [];
 var temperatures = [];
+var maxTemperatures = [];
 var timeStamps = [];
 var displayedPoints = 1000; // 显示的最大数据点数
 var yAxisMax = 60; // y 轴的初始最大值
@@ -15,23 +16,26 @@ function fetchTemperature() {
             var targetTemp = sensor.target_temp;
             var pressure = sensor.pressure;
             var temperature = sensor.temperature;
+            var maxTemperature = sensor.maxTemperature;
             var currentTime = new Date();
 
             document.getElementById('env-temp').innerHTML = '环境温度: ' + envTemp.toFixed(2) + ' °C';
             document.getElementById('target-temp').innerHTML = '目标温度: ' + targetTemp.toFixed(2) + ' °C';
             document.getElementById('pressure').innerHTML = '压力: ' + pressure.toFixed(2) + ' kPa';
             document.getElementById('temperature').innerHTML = 'smp温度: ' + temperature.toFixed(2) + ' °C';
+            document.getElementById('maxTemperature').innerHTML = 'max温度: ' + maxTemperature.toFixed(2) + ' °C';
 
             envTemps.push(envTemp);
             targetTemps.push(targetTemp);
             timeStamps.push(currentTime);
             pressures.push(pressure);
             temperatures.push(temperature);
+            maxTemperatures.push(maxTemperature);
 
-            // 找到当前最大温度
-            var currentMaxTemp = Math.max(...envTemps, ...targetTemps);
+            // 找到当前最大温度或压力
+            var currentMaxTemp = Math.max(...envTemps, ...targetTemps, ...pressures, ...temperatures, ...maxTemperatures);
 
-            // 如果当前最大温度超过 y 轴最大值，更新 y 轴最大值
+            // 如果当前最大数超过 y 轴最大值，更新 y 轴最大值
             if (currentMaxTemp > yAxisMax) {
                 yAxisMax = Math.ceil(currentMaxTemp / 10) * 10; // 按 10 的倍数进行取整
             }

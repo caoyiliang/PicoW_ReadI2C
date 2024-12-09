@@ -7,6 +7,21 @@ function adjustCanvasSize() {
     ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
 }
 
+function drawCurve(ctx, data, color, start, visiblePoints, paddingLeft, paddingTop, width, height, yAxisMax) {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    for (var i = start; i < data.length; i++) {
+        var xPosition = paddingLeft + ((i - start) / (visiblePoints - 1)) * width;
+        var yPosition = height + paddingTop - (data[i] / yAxisMax) * height;
+        if (i === start) {
+            ctx.moveTo(xPosition, yPosition);
+        } else {
+            ctx.lineTo(xPosition, yPosition);
+        }
+    }
+    ctx.stroke();
+}
+
 function drawGraph() {
     var canvas = document.getElementById('temp-canvas');
     var ctx = canvas.getContext('2d');
@@ -16,12 +31,11 @@ function drawGraph() {
         return;
     }
 
-    var paddingLeft = 50;   // Left padding
-    var paddingRight = 20;  // Right padding
-    var paddingBottom = 40; // Bottom padding
-    var paddingTop = 20;    // Top padding
+    var paddingLeft = 50;
+    var paddingRight = 20;
+    var paddingBottom = 40;
+    var paddingTop = 20;
 
-    // Calculate the drawable area, excluding padding
     var width = canvas.width / (window.devicePixelRatio || 1) - paddingLeft - paddingRight;
     var height = canvas.height / (window.devicePixelRatio || 1) - paddingBottom - paddingTop;
     
@@ -31,8 +45,8 @@ function drawGraph() {
     // Draw x and y axes
     ctx.beginPath();
     ctx.moveTo(paddingLeft, paddingTop);
-    ctx.lineTo(paddingLeft, height + paddingTop); // y-axis
-    ctx.lineTo(paddingLeft + width, height + paddingTop); // x-axis
+    ctx.lineTo(paddingLeft, height + paddingTop);
+    ctx.lineTo(paddingLeft + width, height + paddingTop);
     ctx.strokeStyle = 'black';
     ctx.stroke();
 
@@ -48,61 +62,12 @@ function drawGraph() {
         ctx.stroke();
     }
 
-    // Draw environment temperature curve
-    ctx.strokeStyle = 'blue';
-    ctx.beginPath();
-    for (var i = start; i < envTemps.length; i++) {
-        var xPosition = paddingLeft + ((i - start) / (visiblePoints - 1)) * width;
-        var yPosition = height + paddingTop - (envTemps[i] / yAxisMax) * height;
-        if (i === start) {
-            ctx.moveTo(xPosition, yPosition);
-        } else {
-            ctx.lineTo(xPosition, yPosition);
-        }
-    }
-    ctx.stroke();
-
-    // Draw target temperature curve
-    ctx.strokeStyle = 'red';
-    ctx.beginPath();
-    for (var i = start; i < targetTemps.length; i++) {
-        var xPosition = paddingLeft + ((i - start) / (visiblePoints - 1)) * width;
-        var yPosition = height + paddingTop - (targetTemps[i] / yAxisMax) * height;
-        if (i === start) {
-            ctx.moveTo(xPosition, yPosition);
-        } else {
-            ctx.lineTo(xPosition, yPosition);
-        }
-    }
-    ctx.stroke();
-
-    // Draw target pressure curve
-    ctx.strokeStyle = 'green';
-    ctx.beginPath();
-    for (var i = start; i < pressures.length; i++) {
-        var xPosition = paddingLeft + ((i - start) / (visiblePoints - 1)) * width;
-        var yPosition = height + paddingTop - (pressures[i] / yAxisMax) * height;
-        if (i === start) {
-            ctx.moveTo(xPosition, yPosition);
-        } else {
-            ctx.lineTo(xPosition, yPosition);
-        }
-    }
-    ctx.stroke();
-
-    // Draw target temperature curve
-    ctx.strokeStyle = 'purple';
-    ctx.beginPath();
-    for (var i = start; i < temperatures.length; i++) {
-        var xPosition = paddingLeft + ((i - start) / (visiblePoints - 1)) * width;
-        var yPosition = height + paddingTop - (temperatures[i] / yAxisMax) * height;
-        if (i === start) {
-            ctx.moveTo(xPosition, yPosition);
-        } else {
-            ctx.lineTo(xPosition, yPosition);
-        }
-    }
-    ctx.stroke();
+    // Draw curves for each dataset with respective color coding
+    drawCurve(ctx, envTemps, 'blue', start, visiblePoints, paddingLeft, paddingTop, width, height, yAxisMax);
+    drawCurve(ctx, targetTemps, 'red', start, visiblePoints, paddingLeft, paddingTop, width, height, yAxisMax);
+    drawCurve(ctx, pressures, 'green', start, visiblePoints, paddingLeft, paddingTop, width, height, yAxisMax);
+    drawCurve(ctx, temperatures, 'purple', start, visiblePoints, paddingLeft, paddingTop, width, height, yAxisMax);
+    drawCurve(ctx, maxTemperatures, 'black', start, visiblePoints, paddingLeft, paddingTop, width, height, yAxisMax);
 
     // Draw time labels
     if (timeStamps.length > 0) {
@@ -122,31 +87,19 @@ function drawGraph() {
     ctx.fillText('环境温度', canvas.width / (window.devicePixelRatio || 1) - 100, 15);
     ctx.fillText('目标温度', canvas.width / (window.devicePixelRatio || 1) - 100, 30);
     ctx.fillText('压力', canvas.width / (window.devicePixelRatio || 1) - 100, 45);
-    ctx.fillText('smp温度', canvas.width / (window.devicePixelRatio || 1) - 100, 60);
+    ctx.fillText('smp 温度', canvas.width / (window.devicePixelRatio || 1) - 100, 60);
+    ctx.fillText('max 温度', canvas.width / (window.devicePixelRatio || 1) - 100, 75);
 
-    ctx.beginPath();
-    ctx.strokeStyle = 'blue';
-    ctx.moveTo(canvas.width / (window.devicePixelRatio || 1) - 120, 10);
-    ctx.lineTo(canvas.width / (window.devicePixelRatio || 1) - 105, 10);
-    ctx.stroke();
+    var legendYPositions = [10, 25, 40, 55, 70];
+    var colors = ['blue', 'red', 'green', 'purple', 'black'];
 
-    ctx.beginPath();
-    ctx.strokeStyle = 'red';
-    ctx.moveTo(canvas.width / (window.devicePixelRatio || 1) - 120, 25);
-    ctx.lineTo(canvas.width / (window.devicePixelRatio || 1) - 105, 25);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeStyle = 'green';
-    ctx.moveTo(canvas.width / (window.devicePixelRatio || 1) - 120, 40);
-    ctx.lineTo(canvas.width / (window.devicePixelRatio || 1) - 105, 40);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeStyle = 'purple';
-    ctx.moveTo(canvas.width / (window.devicePixelRatio || 1) - 120, 55);
-    ctx.lineTo(canvas.width / (window.devicePixelRatio || 1) - 105, 55);
-    ctx.stroke();
+    for (var i = 0; i < legendYPositions.length; i++) {
+        ctx.beginPath();
+        ctx.strokeStyle = colors[i];
+        ctx.moveTo(canvas.width / (window.devicePixelRatio || 1) - 120, legendYPositions[i]);
+        ctx.lineTo(canvas.width / (window.devicePixelRatio || 1) - 105, legendYPositions[i]);
+        ctx.stroke();
+    }
 }
 
 // 调用调整画布大小的函数

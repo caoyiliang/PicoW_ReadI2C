@@ -2,6 +2,7 @@ import network
 import socket
 from i2c_mrtd3011 import mrtd3011
 from i2c_smp3011 import smp3011
+from spi_max31865 import MAX31865
 import json
 
 def setup_wifi():
@@ -15,7 +16,7 @@ def setup_wifi():
         pass
     print('WiFi 热点已启动\n')
 
-def start_server(mrtd,smp):
+def start_server(mrtd,smp,maxt):
     PORT = 80
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('192.168.4.1', PORT))
@@ -30,6 +31,7 @@ def start_server(mrtd,smp):
 
         if path == '/':
             html_response = """
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -45,31 +47,62 @@ def start_server(mrtd,smp):
         header {
             padding: 20px;
             text-align: center;
-            flex: 0 0 auto; /* Allow header to size naturally */
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column; /* Stack header items vertically */
+            align-items: center;
+            gap: 20px;
+        }
+
+        .groups-container {
+            display: flex;
+            flex-direction: row; /* Arrange groups in a row */
+            gap: 20px;
+            justify-content: center; /* Center groups horizontally */
+        }
+
+        .group {
+            border: 1px solid black;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
         }
 
         #content {
-            flex: 1; /* Grow to fill the remaining space */
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         canvas {
-            width: 90%; /* 90% of the parent's width */
-            height: 90%; /* 90% of the parent's height */
+            width: 90%;
+            height: 90%;
             border: 1px solid black;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>传感器读取</h1>
-        <p id="env-temp">环境温度: 加载中...</p>
-        <p id="target-temp">目标温度: 加载中...</p>
-        <p id="pressure">压力: 加载中...</p>
-        <p id="temperature">smp温度: 加载中...</p>
-        <button id="export-btn">导出数据</button>
+        <div>
+            <h1>传感器读取</h1>
+        </div>
+        <div class="groups-container">
+            <div class="group">
+                <p id="env-temp">环境温度: 加载中...</p>
+                <p id="target-temp">目标温度: 加载中...</p>
+            </div>
+            <div class="group">
+                <p id="pressure">压力: 加载中...</p>
+                <p id="temperature">smp 温度: 加载中...</p>
+            </div>
+            <div class="group">
+                <p id="maxTemperature">max 温度: 加载中...</p>
+            </div>
+        </div>
+        <div>
+            <button id="export-btn">导出数据</button>
+        </div>
     </header>
     <div id="content">
         <canvas id="temp-canvas"></canvas>
@@ -84,7 +117,8 @@ def start_server(mrtd,smp):
         elif path == '/sensor':
             env_temp, target_temp = mrtd.get_temperatures()
             pressure, temperature = smp.get_pressure_temperature()
-            temp_data = json.dumps({'env_temp': env_temp, 'target_temp': target_temp, 'pressure': pressure, 'temperature': temperature})
+            maxTemperature = maxt.readTemperature()
+            temp_data = json.dumps({'env_temp': env_temp, 'target_temp': target_temp, 'pressure': pressure, 'temperature': temperature, 'maxTemperature': maxTemperature})
             client.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n".encode() + temp_data.encode())
         elif path == '/getSensorData.js':
             with open('getSensorData.js', 'r') as js_file:
@@ -111,8 +145,9 @@ def start_server(mrtd,smp):
 def main():
     mrtd = mrtd3011()
     smp = smp3011()
+    maxt = MAX31865()
     setup_wifi()
-    start_server(mrtd,smp)
+    start_server(mrtd,smp,maxt)
 
 if __name__ == '__main__':
     main()
